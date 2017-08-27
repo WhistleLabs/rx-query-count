@@ -3,26 +3,21 @@ package io.github.petedoyle.querycount;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
-import rx.Observable;
-import rx.Observable.Transformer;
-import rx.functions.Func2;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.functions.BiFunction;
 
 /**
- * An RxJava {@link Transformer} that can be composed with a self-updating query to count the
- * number of times that query has emitted results via {@link Observable#compose(Transformer)}.
+ * An RxJava {@link ObservableTransformer} that can be composed with a self-updating query to count the
+ * number of times that query has emitted results via {@link Observable#compose(ObservableTransformer)}.
  * <p>
  * Example usage:
  * <pre>
  *     observable
  *         .compose(QueryCountTransformer.&lt;YourQueryType&gt;create())
- *         .subscribe(new Subscriber&lt;QueryCountResult&lt;YourQueryType&gt;&gt;() {
- *             public void onCompleted() {
- *             }
- *
- *             public void onError(Throwable e) {
- *             }
- *
- *             public void onNext(QueryCountResult&lt;YourQueryType&gt; wrapper) {
+ *         .subscribe(new Consumer&lt;QueryCountResult&lt;YourQueryType&gt;&gt;() {
+ *             public void accept(QueryCountResult&lt;YourQueryType&gt; wrapper) throws Exception {
  *                 if (!wrapper.isInitialUpdate()) {
  *                     doSomething(wrapper.getResult());
  *                 }
@@ -30,11 +25,11 @@ import rx.functions.Func2;
  *         });
  * </pre>
  */
-public final class QueryCountTransformer<T> implements Transformer<T, QueryCountResult<T>> {
+public final class QueryCountTransformer<T> implements ObservableTransformer<T, QueryCountResult<T>> {
 
     private final QueryCounter mQueryIncrementer = new QueryCounter();
 
-    public static <T> Observable.Transformer<T, QueryCountResult<T>> create() {
+    public static <T> ObservableTransformer<T, QueryCountResult<T>> create() {
         return new QueryCountTransformer<T>();
     }
 
@@ -42,11 +37,10 @@ public final class QueryCountTransformer<T> implements Transformer<T, QueryCount
     }
 
     @Override
-    public Observable<QueryCountResult<T>> call(Observable<T> source) {
-        return source.zipWith(mQueryIncrementer, new Func2<T, Long, QueryCountResult<T>>() {
-
+    public ObservableSource<QueryCountResult<T>> apply(Observable<T> upstream) {
+        return upstream.zipWith(mQueryIncrementer, new BiFunction<T, Long, QueryCountResult<T>>() {
             @Override
-            public QueryCountResult<T> call(T t, Long n) {
+            public QueryCountResult<T> apply(T t, Long n) throws Exception {
                 return QueryCountResult.create(t, n);
             }
         });

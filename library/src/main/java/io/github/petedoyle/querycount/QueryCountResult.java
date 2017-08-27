@@ -18,10 +18,10 @@ public abstract class QueryCountResult<T> {
     public abstract T getResult();
 
     /**
-     * Returns the number of times the query {@link rx.Observable} has been emitted.
+     * Returns the number of times the query {@link io.reactivex.Observable} has been emitted.
      *
-     * @return the number of times the query {@link rx.Observable} has been emitted. The initial
-     * query result will return 1.
+     * @return the number of times the query {@link io.reactivex.Observable} has been emitted.
+     * The initial query result will return 1.
      */
     abstract long getEmitCount();
 
